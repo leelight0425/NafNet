@@ -20,8 +20,9 @@ def set_random_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
 
 
 def get_time_str():
@@ -37,7 +38,10 @@ def mkdir_and_rename(path):
     if osp.exists(path):
         new_name = path + '_archived_' + get_time_str()
         print(f'Path already exists. Rename it to {new_name}', flush=True)
-        os.rename(path, new_name)
+        try:
+            os.rename(path, new_name)
+        except OSError:
+            print(f'Rename failed (permission denied). Using existing path.', flush=True)
     os.makedirs(path, exist_ok=True)
 
 

@@ -82,12 +82,17 @@ class NAFBlock(nn.Module):
 
 class NAFNet(nn.Module):
 
-    def __init__(self, img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[]):
+    def __init__(self, img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[],
+                 out_channel=None):
         super().__init__()
+
+        if out_channel is None:
+            out_channel = img_channel
+        self.out_channel = out_channel
 
         self.intro = nn.Conv2d(in_channels=img_channel, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
                               bias=True)
-        self.ending = nn.Conv2d(in_channels=width, out_channels=img_channel, kernel_size=3, padding=1, stride=1, groups=1,
+        self.ending = nn.Conv2d(in_channels=width, out_channels=out_channel, kernel_size=3, padding=1, stride=1, groups=1,
                               bias=True)
 
         self.encoders = nn.ModuleList()
@@ -150,7 +155,7 @@ class NAFNet(nn.Module):
             x = decoder(x)
 
         x = self.ending(x)
-        x = x + inp
+        x = x + inp[:, :self.out_channel, :, :]
 
         return x[:, :, :H, :W]
 
@@ -162,8 +167,11 @@ class NAFNet(nn.Module):
         return x
 
 class NAFNetLocal(Local_Base, NAFNet):
-    def __init__(self, *args, train_size=(1, 3, 256, 256), fast_imp=False, **kwargs):
+    def __init__(self, *args, train_size=None, fast_imp=False, **kwargs):
         Local_Base.__init__(self)
+        if train_size is None:
+            img_ch = kwargs.get('img_channel', 3)
+            train_size = (1, img_ch, 256, 256)
         NAFNet.__init__(self, *args, **kwargs)
 
         N, C, H, W = train_size

@@ -4,6 +4,8 @@
 # Modified from BasicSR (https://github.com/xinntao/BasicSR)
 # Copyright 2018-2020 BasicSR Authors
 # ------------------------------------------------------------------------
+import sys
+sys.path.insert(0, r'E:\code\NAFNet')
 import argparse
 import datetime
 import logging
@@ -12,6 +14,7 @@ import random
 import time
 import torch
 from os import path as osp
+
 
 from basicsr.data import create_dataloader, create_dataset
 from basicsr.data.data_sampler import EnlargedSampler
@@ -28,7 +31,7 @@ from basicsr.utils.options import dict2str, parse
 def parse_options(is_train=True):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-opt', type=str, required=True, help='Path to option YAML file.')
+        '-opt', type=str, default=r"options\train\DIV2K\NAFNet-psf-width64.yml", help='Path to option YAML file.')
     parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm'],
@@ -90,7 +93,7 @@ def init_loggers(opt):
     tb_logger = None
     if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name']:
         # tb_logger = init_tb_logger(log_dir=f'./logs/{opt['name']}') #mkdir logs @CLY
-        tb_logger = init_tb_logger(log_dir=osp.join('logs', opt['name']))
+        tb_logger = init_tb_logger(log_dir=osp.join(opt['path']['root'], 'logs', opt['name']))
     return logger, tb_logger
 
 
@@ -147,11 +150,12 @@ def main():
     # parse options, set distributed setting, set ramdom seed
     opt = parse_options(is_train=True)
 
-    torch.backends.cudnn.benchmark = True
-    # torch.backends.cudnn.deterministic = True
+    if torch.cuda.is_available():
+        torch.backends.cudnn.benchmark = True
+        # torch.backends.cudnn.deterministic = True
 
     # automatic resume ..
-    state_folder_path = 'experiments/{}/training_states/'.format(opt['name'])
+    state_folder_path = osp.join(opt['path']['root'], 'experiments', opt['name'], 'training_states')
     import os
     try:
         states = os.listdir(state_folder_path)
@@ -167,10 +171,9 @@ def main():
 
     # load resume states if necessary
     if opt['path'].get('resume_state'):
-        device_id = torch.cuda.current_device()
         resume_state = torch.load(
             opt['path']['resume_state'],
-            map_location=lambda storage, loc: storage.cuda(device_id))
+            map_location='cpu')
     else:
         resume_state = None
 
@@ -179,7 +182,7 @@ def main():
         make_exp_dirs(opt)
         if opt['logger'].get('use_tb_logger') and 'debug' not in opt[
                 'name'] and opt['rank'] == 0:
-            mkdir_and_rename(osp.join('tb_logger', opt['name']))
+            mkdir_and_rename(osp.join(opt['path']['root'], 'tb_logger', opt['name']))
 
     # initialize loggers
     logger, tb_logger = init_loggers(opt)

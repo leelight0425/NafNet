@@ -1,0 +1,52 @@
+# ------------------------------------------------------------------------
+# NAFNet-PSF 批量测试配置
+# 用法: python basicsr/test.py -opt options/test/DIV2K/NAFNet-psf-test.yml
+# ------------------------------------------------------------------------
+name: NAFNet-PSF-DIV2K-test
+model_type: ImageRestorationModel
+scale: 1
+num_gpu: 1
+manual_seed: 42
+
+datasets:
+
+  val:
+    name: DIV2K-PSF-val
+    type: DIV2KPSFDataset
+    dataroot_gt: ./datasets/DIV2K/DIV2K_valid_HR
+    psf_dir: ./npz_07131
+    io_backend:
+      type: disk
+    gt_size: 256
+    use_flip: false
+    use_rot: false
+    use_xy: true
+
+network_g:
+  type: NAFNet
+  img_channel: 5
+  out_channel: 3
+  width: 64
+  enc_blk_nums: [1, 1, 1, 28]
+  middle_blk_num: 1
+  dec_blk_nums: [1, 1, 1, 1]
+
+path:
+  root: ./
+  pretrain_network_g: experiments/NAFNet-PSF-DIV2K-width64-PE/models/net_g_latest.pth
+  strict_load_g: false
+
+val:
+  save_img: true
+  rgb2bgr: true
+  use_image: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false

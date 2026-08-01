@@ -6,6 +6,7 @@
 # ------------------------------------------------------------------------
 import importlib
 import torch
+import torch.distributed as dist
 import torch.nn.functional as F
 from collections import OrderedDict
 from copy import deepcopy
@@ -288,11 +289,15 @@ class ImageRestorationModel(BaseModel):
             if 'gt' in visuals:
                 gt_img = tensor2img([visuals['gt']], rgb2bgr=rgb2bgr)
                 del self.gt
+            # lq has 5 channels (RGB + XY), extract RGB only
+            lq_rgb = visuals['lq'][:, :3, :, :]
+            lq_img = tensor2img(lq_rgb, rgb2bgr=rgb2bgr)
 
             # tentative for out of GPU memory
             del self.lq
             del self.output
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
             if save_img:
                 if sr_img.shape[2] == 6:
@@ -314,6 +319,9 @@ class ImageRestorationModel(BaseModel):
                         save_gt_img_path = osp.join(self.opt['path']['visualization'],
                                                  img_name,
                                                  f'{img_name}_{current_iter}_gt.png')
+                        save_lq_img_path = osp.join(self.opt['path']['visualization'],
+                                                 img_name,
+                                                 f'{img_name}_{current_iter}_lq.png')
                     else:
                         save_img_path = osp.join(
                             self.opt['path']['visualization'], dataset_name,
@@ -321,9 +329,13 @@ class ImageRestorationModel(BaseModel):
                         save_gt_img_path = osp.join(
                             self.opt['path']['visualization'], dataset_name,
                             f'{img_name}_gt.png')
+                        save_lq_img_path = osp.join(
+                            self.opt['path']['visualization'], dataset_name,
+                            f'{img_name}_lq.png')
 
                     imwrite(sr_img, save_img_path)
                     imwrite(gt_img, save_gt_img_path)
+                    imwrite(lq_img, save_lq_img_path)
 
             if with_metrics:
                 # calculate metrics
@@ -362,7 +374,8 @@ class ImageRestorationModel(BaseModel):
             keys.append(name)
             metrics.append(value)
         metrics = torch.stack(metrics, 0)
-        torch.distributed.reduce(metrics, dst=0)
+        if dist.is_available() and dist.is_initialized():
+            torch.distributed.reduce(metrics, dst=0)
         if self.opt['rank'] == 0:
             metrics_dict = {}
             cnt = 0

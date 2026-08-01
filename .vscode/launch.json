@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train NAFNet-PSF-DIV2K",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/basicsr/train.py",
+            "console": "integratedTerminal",
+            "args": ["-opt", "options/train/DIV2K/NAFNet-psf-width64.yml"],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Test NAFNet-PSF-DIV2K",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/basicsr/test.py",
+            "console": "integratedTerminal",
+            "args": ["-opt", "options/test/DIV2K/NAFNet-psf-test.yml"],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "CUDA_VISIBLE_DEVICES": ""
+            }
+        }
+    ]
+}

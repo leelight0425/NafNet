@@ -68,8 +68,11 @@ def parse(opt_path, is_train=True):
         if (val is not None) and ('resume_state' in key
                                   or 'pretrain_network' in key):
             opt['path'][key] = osp.expanduser(val)
-    opt['path']['root'] = osp.abspath(
-        osp.join(__file__, osp.pardir, osp.pardir, osp.pardir))
+    if opt['path'].get('root') is None:
+        opt['path']['root'] = osp.abspath(
+            osp.join(__file__, osp.pardir, osp.pardir, osp.pardir))
+    else:
+        opt['path']['root'] = osp.abspath(opt['path']['root'])
     if is_train:
         experiments_root = osp.join(opt['path']['root'], 'experiments',
                                     opt['name'])
