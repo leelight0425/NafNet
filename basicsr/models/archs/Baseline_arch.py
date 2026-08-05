@@ -81,15 +81,31 @@ class BaselineBlock(nn.Module):
 
 class Baseline(nn.Module):
 
+<<<<<<< HEAD
     def __init__(self, img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[], dw_expand=1, ffn_expand=2,
                  out_channel=None):
+=======
+    def __init__(self, img_channel=3, width=16, middle_blk_num=1, enc_blk_nums=[], dec_blk_nums=[],
+                 dw_expand=1, ffn_expand=2, out_channel=None, kernel_channels=0):
+>>>>>>> 10271d7 (add_psfencoder)
         super().__init__()
 
         if out_channel is None:
             out_channel = img_channel
         self.out_channel = out_channel
+<<<<<<< HEAD
 
         self.intro = nn.Conv2d(in_channels=img_channel, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
+=======
+        self.kernel_channels = kernel_channels
+
+        if kernel_channels > 0:
+            from basicsr.models.archs.NAFNet_arch import PSFKernelEncoder
+            self.psf_encoder = PSFKernelEncoder(psf_size=31, feat_dim=kernel_channels)
+
+        total_in = img_channel + kernel_channels
+        self.intro = nn.Conv2d(in_channels=total_in, out_channels=width, kernel_size=3, padding=1, stride=1, groups=1,
+>>>>>>> 10271d7 (add_psfencoder)
                               bias=True)
         self.ending = nn.Conv2d(in_channels=width, out_channels=out_channel, kernel_size=3, padding=1, stride=1, groups=1,
                               bias=True)
@@ -133,9 +149,15 @@ class Baseline(nn.Module):
 
         self.padder_size = 2 ** len(self.encoders)
 
-    def forward(self, inp):
+    def forward(self, inp, kernel=None):
         B, C, H, W = inp.shape
         inp = self.check_image_size(inp)
+
+        if self.kernel_channels > 0 and kernel is not None:
+            from basicsr.models.archs.NAFNet_arch import tile_psf_feature
+            _, _, Hp, Wp = inp.shape
+            kfeat = tile_psf_feature(kernel, self.psf_encoder, Wp)
+            inp = torch.cat([inp, kfeat], dim=1)
 
         x = self.intro(inp)
 
@@ -170,7 +192,13 @@ class BaselineLocal(Local_Base, Baseline):
         Local_Base.__init__(self)
         if train_size is None:
             img_ch = kwargs.get('img_channel', 3)
+<<<<<<< HEAD
             train_size = (1, img_ch, 256, 256)
+=======
+            k_ch = kwargs.get('kernel_channels', 0)
+            total_ch = img_ch + k_ch
+            train_size = (1, total_ch, 256, 256)
+>>>>>>> 10271d7 (add_psfencoder)
         Baseline.__init__(self, *args, **kwargs)
 
         N, C, H, W = train_size

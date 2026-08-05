@@ -106,6 +106,10 @@ class ImageRestorationModel(BaseModel):
         self.lq = data['lq'].to(self.device)
         if 'gt' in data:
             self.gt = data['gt'].to(self.device)
+        if 'kernel' in data:
+            self.kernel = data['kernel'].to(self.device)
+        else:
+            self.kernel = None
 
     def grids(self):
         b, c, h, w = self.gt.size()
@@ -193,7 +197,8 @@ class ImageRestorationModel(BaseModel):
         if self.opt['train'].get('mixup', False):
             self.mixup_aug()
 
-        preds = self.net_g(self.lq)
+        kernel = getattr(self, 'kernel', None)
+        preds = self.net_g(self.lq, kernel=kernel)
         if not isinstance(preds, list):
             preds = [preds]
 
@@ -240,12 +245,17 @@ class ImageRestorationModel(BaseModel):
             n = len(self.lq)
             outs = []
             m = self.opt['val'].get('max_minibatch', n)
+            kernel = getattr(self, 'kernel', None)
             i = 0
             while i < n:
                 j = i + m
                 if j >= n:
                     j = n
-                pred = self.net_g(self.lq[i:j])
+                # Tile kernel if batch size changed (e.g. grids)
+                k = kernel
+                if kernel is not None and kernel.shape[0] != (j - i):
+                    k = kernel.expand(j - i, -1, -1, -1)
+                pred = self.net_g(self.lq[i:j], kernel=k)
                 if isinstance(pred, list):
                     pred = pred[-1]
                 outs.append(pred.detach().cpu())

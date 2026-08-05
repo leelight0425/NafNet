@@ -1,11 +1,19 @@
 import cv2
 import numpy as np
 import random
+<<<<<<< HEAD
 from pathlib import Path
 from scipy.signal import convolve2d
 
 from basicsr.utils import FileClient, imfrombytes, img2tensor
 from basicsr.data.data_util import paths_from_lmdb
+=======
+import torch
+from pathlib import Path
+from scipy.signal import convolve2d
+
+from basicsr.utils import img2tensor
+>>>>>>> 10271d7 (add_psfencoder)
 from basicsr.data.transforms import augment
 
 
@@ -25,6 +33,7 @@ class DIV2KPSFDataset:
     def __init__(self, opt):
         self.opt = opt
 
+<<<<<<< HEAD
         # ---- file client (io backend) ----
         self.file_client = None
         self.io_backend_opt = opt['io_backend']
@@ -45,6 +54,15 @@ class DIV2KPSFDataset:
                 if p.suffix.lower() in exts
             )
 
+=======
+        # ---- Scan DIV2K images ----
+        dataroot_gt = opt['dataroot_gt']
+        exts = {'.png', '.jpg', '.jpeg', '.bmp'}
+        self.gt_paths = sorted(
+            str(p) for p in Path(dataroot_gt).glob('*')
+            if p.suffix.lower() in exts
+        )
+>>>>>>> 10271d7 (add_psfencoder)
         if len(self.gt_paths) == 0:
             raise FileNotFoundError(f"No image files found in {dataroot_gt}")
 
@@ -102,13 +120,22 @@ class DIV2KPSFDataset:
     @staticmethod
     def _psf_convolve_rgb(image, psf):
         """Per-channel PSF convolution in RGB domain."""
+<<<<<<< HEAD
+=======
+        image = image.astype(np.float64)
+        psf = psf.astype(np.float64)
+>>>>>>> 10271d7 (add_psfencoder)
         convolved = np.zeros_like(image)
         for ch in range(3):
             convolved[:, :, ch] = convolve2d(
                 image[:, :, ch], psf[:, :, ch],
                 mode='same', boundary='symm'
             )
+<<<<<<< HEAD
         return convolved
+=======
+        return convolved.astype(np.float32)
+>>>>>>> 10271d7 (add_psfencoder)
 
     def _make_xy_grid(self, h, w, sensor_x, sensor_y, step_x, step_y):
         """Create XY coordinate grid using global sensor coordinates.
@@ -167,6 +194,7 @@ class DIV2KPSFDataset:
         return img_gt, img_lq, xy_grid
 
     def __getitem__(self, index):
+<<<<<<< HEAD
         if self.file_client is None:
             self.file_client = FileClient(
                 self.io_backend_opt.pop('type'), **self.io_backend_opt)
@@ -183,6 +211,15 @@ class DIV2KPSFDataset:
             if img_gt is None:
                 raise IOError(f"Failed to read image: {gt_path}")
             img_gt = cv2.cvtColor(img_gt, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+=======
+        gt_path = self.gt_paths[index]
+
+        # ---- 1. Load GT, BGR → RGB ----
+        img_gt = cv2.imread(gt_path)
+        if img_gt is None:
+            raise IOError(f"Failed to read image: {gt_path}")
+        img_gt = cv2.cvtColor(img_gt, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
+>>>>>>> 10271d7 (add_psfencoder)
         h_img, w_img = img_gt.shape[:2]
 
         # ---- 2. Pad if smaller than gt_size ----
@@ -235,10 +272,20 @@ class DIV2KPSFDataset:
         # ---- 6. Convert to tensor (already RGB, no BGR→RGB needed) ----
         img_gt_t = img2tensor(img_gt, bgr2rgb=False, float32=True)   # (3, H, W)
         img_lq_t = img2tensor(img_lq, bgr2rgb=False, float32=True)   # (3|5, H, W)
+<<<<<<< HEAD
+=======
+        kernel_t = torch.from_numpy(psf.transpose(2, 0, 1)).float()  # (3, 31, 31)
+>>>>>>> 10271d7 (add_psfencoder)
 
         return {
             'lq': img_lq_t,
             'gt': img_gt_t,
             'lq_path': gt_path,
             'gt_path': gt_path,
+<<<<<<< HEAD
+=======
+            'psf_cx': int(self.psf_centers[psf_idx][0]),
+            'psf_cy': int(self.psf_centers[psf_idx][1]),
+            'kernel': kernel_t,
+>>>>>>> 10271d7 (add_psfencoder)
         }
