@@ -7,3 +7,9 @@ logs/
 *.sh
 datasets
 basicsr.egg-info
+nafnet/
+Lib/
+site-packages/
+*.pyd
+*.so
+*.dll

@@ -8,7 +8,11 @@
 name: NAFNet-PSF-DIV2K-width64
 model_type: ImageRestorationModel
 scale: 1
+<<<<<<< HEAD
 num_gpu: 1
+=======
+num_gpu: 0
+>>>>>>> de12090 (add_nafnetgraph)
 manual_seed: 42
 
 datasets:
@@ -20,11 +24,21 @@ datasets:
 
     io_backend:
       type: disk
+<<<<<<< HEAD
 
     gt_size: 256
     use_flip: true
     use_rot: true
     use_xy: false
+=======
+    gt_size: 256
+    use_flip: true
+    use_rot: true
+    # 位置编码：三选一
+    use_xy: false               # 简单 XY 网格 (2ch → LQ=5ch)
+    # use_fourier: true         # 傅里叶位置编码 (NeRF-style)
+    # fourier_freqs: 4          #   频段数 L, PE=4×L ch, LQ=3+4L ch
+>>>>>>> de12090 (add_nafnetgraph)
 
     # data loader
     use_shuffle: true
@@ -43,22 +57,35 @@ datasets:
     gt_size: 256
     use_flip: false
     use_rot: false
+<<<<<<< HEAD
     use_xy: false
+=======
+    use_xy: true
+>>>>>>> de12090 (add_nafnetgraph)
     phase: val
 
 
 network_g:
   type: NAFNetLocal
   width: 64
+<<<<<<< HEAD
   img_channel: 3
   out_channel: 3
+=======
+  img_channel: 3              # RGB channels (3 if no PE, 5 if XY, 19 if Fourier L=4)
+  out_channel: 3
+  kernel_channels: 0          # PSF encoder feature dim (0=disabled, e.g. 16)
+>>>>>>> de12090 (add_nafnetgraph)
   enc_blk_nums: [1, 1, 1, 28]
   middle_blk_num: 1
   dec_blk_nums: [1, 1, 1, 1]
 
 # path
 path:
+<<<<<<< HEAD
   root: /mnt/Project
+=======
+>>>>>>> de12090 (add_nafnetgraph)
   pretrain_network_g: ~
   strict_load_g: true
   resume_state: ~

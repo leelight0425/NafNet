@@ -5,12 +5,20 @@
 name: NAFNet-PSF-DIV2K-test
 model_type: ImageRestorationModel
 scale: 1
+<<<<<<< HEAD
 num_gpu: 1
+=======
+num_gpu: 0
+>>>>>>> de12090 (add_nafnetgraph)
 manual_seed: 42
 
 datasets:
 
   val:
+<<<<<<< HEAD
+=======
+    psf_edge_threshold: 500
+>>>>>>> de12090 (add_nafnetgraph)
     name: DIV2K-PSF-val
     type: DIV2KPSFDataset
     dataroot_gt: ./datasets/DIV2K/DIV2K_valid_HR
@@ -20,11 +28,19 @@ datasets:
     gt_size: 256
     use_flip: false
     use_rot: false
+<<<<<<< HEAD
     use_xy: true
 
 network_g:
   type: NAFNet
   img_channel: 5
+=======
+    use_xy: false
+
+network_g:
+  type: NAFNet
+  img_channel: 3
+>>>>>>> de12090 (add_nafnetgraph)
   out_channel: 3
   width: 64
   enc_blk_nums: [1, 1, 1, 28]
@@ -32,8 +48,13 @@ network_g:
   dec_blk_nums: [1, 1, 1, 1]
 
 path:
+<<<<<<< HEAD
   root: ./
   pretrain_network_g: experiments/NAFNet-PSF-DIV2K-width64-PE/models/net_g_latest.pth
+=======
+  # root: ./
+  pretrain_network_g: E:\model\experiments-nafnet-NonePE\NAFNet-PSF-DIV2K-width64\models\net_g_latest.pth
+>>>>>>> de12090 (add_nafnetgraph)
   strict_load_g: false
 
 val:
